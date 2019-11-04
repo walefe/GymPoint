@@ -11,10 +11,10 @@ describe('User', () => {
   });
 
   it('should return a token when the user logs in', async () => {
-    const user = await factory.create('User', {
-      email: 'teste@testes.com',
+    const user = {
+      email: 'demo@teste.com',
       password: '1234567',
-    });
+    };
 
     const response = await request(app)
       .post('/sessions')
