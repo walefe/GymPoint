@@ -26,9 +26,15 @@ class UserController {
       return res.status(400).json({ erro: 'Duplicated email' });
     }
 
-    const user = await User.create(req.body);
+    const { name, age, weight, height } = await User.create(req.body);
 
-    return res.json(user);
+    return res.json({
+      name,
+      email,
+      age,
+      weight,
+      height,
+    });
   }
 }
 
