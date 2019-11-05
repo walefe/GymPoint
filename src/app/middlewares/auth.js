@@ -3,7 +3,7 @@ import { promisify } from 'util';
 
 import authConfig from '../../config/auth';
 
-export default (req, res, next) => {
+export default async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -13,7 +13,7 @@ export default (req, res, next) => {
   const [, token] = authHeader.split(' ');
 
   try {
-    const decoded = promisify(jwt.verify)(token, authConfig.secret);
+    const decoded = await promisify(jwt.verify)(token, authConfig.secret);
 
     req.userId = decoded.id;
 
