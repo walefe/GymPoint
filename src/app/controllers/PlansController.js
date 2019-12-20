@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 
+import User from '../models/User';
 import Plans from '../models/Plans';
 
 class PlansController {
@@ -14,6 +15,13 @@ class PlansController {
 
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails!' });
+    }
+    const user = await User.findOne({
+      where: { id: req.userId, instructor: true },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'User must be an administrator.' });
     }
 
     const plan = await Plans.findOne({ where: { title: req.body.title } });
@@ -33,6 +41,14 @@ class PlansController {
 
   async index(req, res) {
     const plans = await Plans.findAll();
+
+    const user = await User.findOne({
+      where: { id: req.userId, instructor: true },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'User must be an administrator.' });
+    }
 
     if (!plans) {
       return res.json({ error: 'Not found!' });
@@ -54,6 +70,14 @@ class PlansController {
       return res.status(400).json({ error: 'Validation fails!' });
     }
 
+    const user = await User.findOne({
+      where: { id: req.userId, instructor: true },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'User must be an administrator.' });
+    }
+
     const { id } = req.params;
 
     const plan = await Plans.findOne({ where: { id } });
@@ -69,6 +93,14 @@ class PlansController {
 
   async delete(req, res) {
     const plan = await Plans.findByPk(req.params.id);
+
+    const user = await User.findOne({
+      where: { id: req.userId, instructor: true },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'User must be an administrator.' });
+    }
 
     if (!plan) {
       return res.json({ error: 'Plan not found.' });
