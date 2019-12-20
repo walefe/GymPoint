@@ -6,6 +6,8 @@ import User from '../models/User';
 import Plan from '../models/Plans';
 import Registration from '../models/Registration';
 
+import Mail from '../../lib/Mail';
+
 class RegistrationController {
   async index(req, res) {
     const userAdmin = await User.findOne({
@@ -92,21 +94,71 @@ class RegistrationController {
       price,
     });
 
+    const { name, email } = studentExist;
+
+    await Mail.sendMail({
+      to: `${name} <${email}>`,
+      subject: 'Matrícula',
+      text: 'A sua matrícula foi realizada!',
+    });
+
     return res.json(registration);
   }
 
   async update(req, res) {
-    return res.json();
+    const schema = Yup.object().shape({
+      start_date: Yup.date(),
+      plan: Yup.string(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails!' });
+    }
+
+    const userAdmin = await User.findOne({
+      where: { id: req.userId, instructor: true },
+    });
+
+    if (!userAdmin) {
+      return res.status(400).json({ error: 'User must be an administrator.' });
+    }
+
+    const { id } = req.params;
+
+    const registration = await Registration.findOne({ where: { id } });
+
+    if (!registration) {
+      return res.json({ error: 'Registration not found!' });
+    }
+
+    const { start_date, plan } = req.body;
+
+    if (start_date || plan) {
+      const dateStart = parseISO(start_date);
+
+      if (isBefore(dateStart, new Date())) {
+        return res.status(400).json({ error: 'Past dates are not permitted' });
+      }
+
+      const { duration, price } = await Plan.findOne({
+        where: { title: plan },
+      });
+
+      const endDate = addMonths(dateStart, duration);
+      await registration.update({ start_date, end_date: endDate, price });
+    }
+
+    return res.json(registration);
   }
 
   async delete(req, res) {
     const registration = await Registration.findByPk(req.params.id);
 
-    const user = await User.findOne({
+    const userAdmin = await User.findOne({
       where: { id: req.userId, instructor: true },
     });
 
-    if (!user) {
+    if (!userAdmin) {
       return res.status(400).json({ error: 'User must be an administrator.' });
     }
 
