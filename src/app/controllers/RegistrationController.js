@@ -6,7 +6,8 @@ import User from '../models/User';
 import Plan from '../models/Plans';
 import Registration from '../models/Registration';
 
-import Mail from '../../lib/Mail';
+import RegistrationMail from '../jobs/RegistrationMail';
+import Queue from '../../lib/Queue';
 
 class RegistrationController {
   async index(req, res) {
@@ -96,10 +97,12 @@ class RegistrationController {
 
     const { name, email } = studentExist;
 
-    await Mail.sendMail({
-      to: `${name} <${email}>`,
-      subject: 'Matrícula',
-      text: 'A sua matrícula foi realizada!',
+    await Queue.add(RegistrationMail.key, {
+      name,
+      email,
+      plan,
+      dateStart,
+      endDate,
     });
 
     return res.json(registration);
